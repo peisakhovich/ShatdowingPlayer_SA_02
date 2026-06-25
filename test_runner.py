@@ -1,5 +1,10 @@
 import pyodbc
+import logging
 from audio import tts
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 
 CONNECTION_STRING = (
     "DRIVER={ODBC Driver 17 for SQL Server};"
@@ -78,11 +83,12 @@ def run_session(plan, set_id: int):
 # MAIN
 # ----------------------------
 def main():
-    set_id = 1  # твой тестовый set
-
-    conn = pyodbc.connect(CONNECTION_STRING)
+    set_id = 1
+    conn = None
 
     try:
+        conn = pyodbc.connect(CONNECTION_STRING)
+
         plan = load_training_plan(conn, set_id)
 
         if not plan:
@@ -91,9 +97,18 @@ def main():
 
         run_session(plan, set_id)
 
-    finally:
-        conn.close()
+    except pyodbc.Error as e:
+        logger.exception("Database error")
+        print("DB error:", e)
 
+    except Exception as e:
+        logger.exception("Unexpected error")
+        print("Unexpected error:", e)
+
+    finally:
+        if conn:
+            conn.close()
 
 if __name__ == "__main__":
-    main()
+    print("RUNNING AS SCRIPT")
+    main()       
