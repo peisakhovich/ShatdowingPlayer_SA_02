@@ -83,7 +83,7 @@ def run_session(plan, set_id: int):
 # MAIN
 # ----------------------------
 def main():
-    set_id = 1
+    set_id = 2
     conn = None
 
     try:
