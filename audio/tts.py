@@ -1,20 +1,46 @@
-import edge_tts
 import asyncio
 import os
-from playsound import playsound
+import tempfile
 
-VOICE = "pl-PL-MarekNeural"   # польский голос (можно поменять)
+import edge_tts
+import pygame
+
+
+VOICE = "pl-PL-MarekNeural"
+
+# Инициализируем mixer один раз при импорте модуля
+if not pygame.mixer.get_init():
+    pygame.mixer.init()
 
 
 async def _speak_async(text: str):
-    filename = "temp.mp3"
+    # Создаём временный mp3-файл
+    fd, filename = tempfile.mkstemp(suffix=".mp3")
+    os.close(fd)
 
-    communicate = edge_tts.Communicate(text, VOICE)
-    await communicate.save(filename)
+    try:
+        communicate = edge_tts.Communicate(text, VOICE)
+        await communicate.save(filename)
 
-    playsound(filename)
+        pygame.mixer.music.load(filename)
+        pygame.mixer.music.play()
 
-    os.remove(filename)
+        # Ждём окончания воспроизведения
+        while pygame.mixer.music.get_busy():
+            pygame.time.wait(100)
+
+    finally:
+        # На всякий случай освобождаем файл
+        pygame.mixer.music.unload()
+
+        if os.path.exists(filename):
+            try:
+                os.remove(filename)
+            except PermissionError:
+                # Иногда Windows ещё держит файл долю секунды
+                pygame.time.wait(100)
+                if os.path.exists(filename):
+                    os.remove(filename)
 
 
 def speak(text: str):
@@ -22,8 +48,8 @@ def speak(text: str):
 
 
 def list_voices():
-    print("Примеры голосов:")
+    print("Доступные голоса (примеры):")
     print("pl-PL-MarekNeural")
     print("pl-PL-ZofiaNeural")
-    print("en-US-JennyNeural")
     print("en-US-GuyNeural")
+    print("en-US-JennyNeural")
