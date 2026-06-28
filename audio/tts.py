@@ -28,8 +28,8 @@ async def _speak_async(item: dict):
         rate_str = f"{rate_value:+.0f}%"
 
         communicate = edge_tts.Communicate(
-            item["text"],
-            VOICE,
+            text=item["text"],
+            voice=VOICE,
             rate=rate_str
         )
 
@@ -54,9 +54,14 @@ def speak(item: dict, state: dict = None):
     filename = asyncio.run(_speak_async(item))
 
     paused = False
+    last_space = 0  # ✅ FIX: debounce initialization
 
     try:
-        while pygame.mixer.music.get_busy():
+        while True:
+
+            # если проигрывание завершилось И не на паузе
+            if not pygame.mixer.music.get_busy() and not paused:
+                return "DONE"
 
             for event in pygame.event.get():
 
@@ -86,8 +91,16 @@ def speak(item: dict, state: dict = None):
                         pygame.mixer.music.stop()
                         return "PREVIOUS"
 
-                    # SPACE = pause/play
+                    # SPACE = pause / resume
                     if event.key == pygame.K_SPACE:
+
+                        now = pygame.time.get_ticks()
+
+                        # debounce
+                        if now - last_space < 200:
+                            continue
+                        last_space = now
+
                         if paused:
                             pygame.mixer.music.unpause()
                             paused = False
@@ -97,10 +110,11 @@ def speak(item: dict, state: dict = None):
 
             pygame.time.wait(20)
 
-        return "DONE"
-
     finally:
-        pygame.mixer.music.unload()
+        try:
+            pygame.mixer.music.unload()
+        except Exception:
+            pass
 
         if os.path.exists(filename):
             try:
