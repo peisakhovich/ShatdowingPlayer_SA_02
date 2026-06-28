@@ -9,7 +9,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-CONNECTION_STRING = (
+CONNECTION_STRING = ( 
     "DRIVER={ODBC Driver 17 for SQL Server};"
     "SERVER=telegrambotsql.database.windows.net;"
     "DATABASE=telegrambotdb;"
@@ -59,7 +59,7 @@ def load_training_plan(conn, set_id: int):
 # ----------------------------
 # RUN SESSION (TEST MODE)
 # ----------------------------
-def run_session(plan, set_id: int):
+def run_session(plan: list[dict], set_id: int):
     print("\n==============================")
     print(f"SA_02 TEST SESSION | SET ID: {set_id}")
     print("==============================\n")
@@ -77,7 +77,7 @@ def run_session(plan, set_id: int):
         for r in range(item["repeat"]):
             print(f"   ▶ repeat {r+1}/{item['repeat']} -> {item['text']}")
 
-            tts.speak(item["text"])
+            tts.speak(item)
 
         print("✓ done\n")
 

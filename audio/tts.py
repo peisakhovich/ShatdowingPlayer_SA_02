@@ -13,13 +13,16 @@ if not pygame.mixer.get_init():
     pygame.mixer.init()
 
 
-async def _speak_async(text: str):
+async def _speak_async(Item: dict):
     # Создаём временный mp3-файл
     fd, filename = tempfile.mkstemp(suffix=".mp3")
     os.close(fd)
 
     try:
-        communicate = edge_tts.Communicate(text, VOICE)
+        
+        rate_value = (Item["speed"] - 1) * 100
+        rate_str = f"{rate_value:+.0f}%"
+        communicate = edge_tts.Communicate(Item["text"], VOICE,  rate=rate_str)
         await communicate.save(filename)
 
         pygame.mixer.music.load(filename)
@@ -27,7 +30,7 @@ async def _speak_async(text: str):
 
         # Ждём окончания воспроизведения
         while pygame.mixer.music.get_busy():
-            pygame.time.wait(100)
+            pygame.time.wait(Item["pause"])
 
     finally:
         # На всякий случай освобождаем файл
@@ -43,9 +46,8 @@ async def _speak_async(text: str):
                     os.remove(filename)
 
 
-def speak(text: str):
-    asyncio.run(_speak_async(text))
-
+def speak(Item: dict):
+    asyncio.run(_speak_async(Item))
 
 def list_voices():
     print("Доступные голоса (примеры):")
