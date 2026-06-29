@@ -38,6 +38,10 @@ async def _speak_async(item: dict):
         pygame.mixer.music.load(filename)
         pygame.mixer.music.play()
 
+        # Ждём окончания воспроизведения
+       #while pygame.mixer.music.get_busy():
+        #   await asyncio.sleep(item["pause"] / 1000)
+
         return filename
 
     except Exception:
@@ -49,8 +53,7 @@ async def _speak_async(item: dict):
 # ----------------------------
 # MAIN SPEAK FUNCTION
 # ----------------------------
-def speak(item: dict, state: dict = None):
-
+def speak(item: dict):
     filename = asyncio.run(_speak_async(item))
 
     paused = False

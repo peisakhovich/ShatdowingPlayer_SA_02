@@ -60,39 +60,12 @@ def load_training_plan(conn, set_id: int):
     return plan
 
 
-# ----------------------------
-# EVENT STATE
-# ----------------------------
-def create_event_state():
-    return {
-        "terminate": False
-    }
-
-
-def process_events(state):
-    """
-    Returns:
-        bool -> continue running
-    """
-    for event in pygame.event.get():
-
-        if event.type == pygame.QUIT:
-            state["terminate"] = True
-            return False
-
-        elif event.type == pygame.KEYDOWN:
-
-            if event.key == pygame.K_END:
-                state["terminate"] = True
-                return False
-
-    return True
 
 
 # ----------------------------
 # RUN SESSION
 # ----------------------------
-def run_session(plan: list[dict], set_id: int, state: dict):
+def run_session(plan: list[dict], set_id: int):
 
     print("\n==============================")
     print(f"SA_02 TEST SESSION | SET ID: {set_id}")
@@ -114,11 +87,9 @@ def run_session(plan: list[dict], set_id: int, state: dict):
 
             print(f"   ▶ repeat {r+1}/{item['repeat']}")
 
-            result = tts.speak(item, state)
+            result = tts.speak(item)
 
-            if state["terminate"]:
-                return
-
+          
             if result == "NEXT":
                 idx += 1
                 break
@@ -142,14 +113,14 @@ def run_session(plan: list[dict], set_id: int, state: dict):
 # MAIN
 # ----------------------------
 def main():
-    set_id = 2
+    set_id = 1
     conn = None
 
     pygame.init()
     screen = pygame.display.set_mode((500, 120))
     pygame.display.set_caption("Shadowing App")
 
-    state = create_event_state()
+    #tate = create_event_state()
 
     try:
         conn = pyodbc.connect(CONNECTION_STRING)
@@ -160,7 +131,8 @@ def main():
             print("No data found for set:", set_id)
             return
 
-        run_session(plan, set_id, state)
+        run_session(plan, set_id)
+
 
     except pyodbc.Error as e:
         logger.exception("Database error")
