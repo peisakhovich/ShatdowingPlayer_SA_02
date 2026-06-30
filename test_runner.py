@@ -93,7 +93,7 @@ def run_session(plan: list[dict], set_id: int):
 
             result = tts.speak(item,TimeEndPause)
 
-          
+
             if result == "NEXT":
                 idx += 1
                 break
@@ -109,15 +109,21 @@ def run_session(plan: list[dict], set_id: int):
             elif result == "DONE":
 
                 TimeEndPause = time.time() + (item["pause"] / 1000)  # Set the end time for the pause   
-                idx += 1
-                break
+                
+                if r == (item["repeat"]-1 ):
+                    idx += 1
+                    break
             
 
             elif result == "TERMINATE":
                 return
 
-        else:
-            idx += 1
+            else:
+                #if r < (item["repeat"] ):
+                idx += 2
+             #   if r < (item["repeat"]-1 ):
+             #       idx -= 1
+
 
 
 # ----------------------------

@@ -39,10 +39,6 @@ async def _speak_async(item: dict):
         pygame.mixer.music.load(filename)
         pygame.mixer.music.play()
 
-        # Ждём окончания воспроизведения
-       #while pygame.mixer.music.get_busy():
-        #   await asyncio.sleep(item["pause"] / 1000)
-
         return filename
 
     except Exception:
@@ -74,6 +70,10 @@ def speak(item: dict,TimeEndPause: float):
                     return "TERMINATE"
 
                 if event.type == pygame.KEYDOWN:
+
+                    # ESC = skip pause after previosly item
+                    if event.key == pygame.K_ESCAPE:
+                        TimeEndPause = time.time()      
 
                     # END
                     if event.key == pygame.K_END:
