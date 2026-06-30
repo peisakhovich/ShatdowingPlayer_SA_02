@@ -73,6 +73,7 @@ def run_session(plan: list[dict], set_id: int):
     print("==============================\n")
 
     TimeEndPause = time.time()  # Initialize TimeEndPause to current time
+    SpeedTune = 1.0  # Initialize SpeedTune to default value
 
     idx = 0
 
@@ -91,8 +92,14 @@ def run_session(plan: list[dict], set_id: int):
 
             print(f"   ▶ repeat {r+1}/{item['repeat']}")
 
-            result = tts.speak(item,TimeEndPause)
+            result = tts.speak(item,TimeEndPause,SpeedTune)
 
+            if result == "SPEED_INC":
+                SpeedTune += 0.1
+                break
+            if result == "SPEED_DEC":
+                SpeedTune -= 0.1
+                break    
 
             if result == "NEXT":
                 idx += 1
@@ -119,10 +126,8 @@ def run_session(plan: list[dict], set_id: int):
                 return
 
             else:
-                #if r < (item["repeat"] ):
-                idx += 2
-             #   if r < (item["repeat"]-1 ):
-             #       idx -= 1
+                idx += 1
+
 
 
 

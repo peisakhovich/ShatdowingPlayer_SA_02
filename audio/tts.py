@@ -20,12 +20,12 @@ if not pygame.mixer.get_init():
 # ----------------------------
 # ASYNC SPEECH GENERATION
 # ----------------------------
-async def _speak_async(item: dict):
+async def _speak_async(item: dict, SpeedTune: float):
     fd, filename = tempfile.mkstemp(suffix=".mp3")
     os.close(fd)
 
     try:
-        rate_value = (item["speed"] - 1) * 100
+        rate_value = (item["speed"]*SpeedTune-1) * 100
         rate_str = f"{rate_value:+.0f}%"
 
         communicate = edge_tts.Communicate(
@@ -50,13 +50,13 @@ async def _speak_async(item: dict):
 # ----------------------------
 # MAIN SPEAK FUNCTION
 # ----------------------------
-def speak(item: dict,TimeEndPause: float):
-    filename = asyncio.run(_speak_async(item))
+def speak(item: dict,TimeEndPause: float,SpeedTune: float):
+    filename = asyncio.run(_speak_async(item,SpeedTune))
 
     paused = False
     last_space = 0  # ✅ FIX: debounce initialization
     paused_manual = False
-
+    
     try:
         while True:
 
@@ -70,6 +70,14 @@ def speak(item: dict,TimeEndPause: float):
                     return "TERMINATE"
 
                 if event.type == pygame.KEYDOWN:
+
+                    if event.key == pygame.K_KP_PLUS: 
+                        pygame.mixer.music.stop()
+                        return "SPEED_INC"
+
+                    if event.key == pygame.K_KP_MINUS:
+                        pygame.mixer.music.stop()
+                        return "SPEED_DEC"
 
                     # ESC = skip pause after previosly item
                     if event.key == pygame.K_ESCAPE:
@@ -139,7 +147,7 @@ def speak(item: dict,TimeEndPause: float):
             # 5. CPU LIMIT
             # ----------------------------
             pygame.time.wait(20)
-        
+        # while end
             
     finally:
         try:
