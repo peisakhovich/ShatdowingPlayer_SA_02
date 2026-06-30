@@ -1,6 +1,7 @@
 import asyncio
 import os
 import tempfile
+import time
 
 import edge_tts
 import pygame
@@ -53,19 +54,19 @@ async def _speak_async(item: dict):
 # ----------------------------
 # MAIN SPEAK FUNCTION
 # ----------------------------
-def speak(item: dict):
+def speak(item: dict,TimeEndPause: float):
     filename = asyncio.run(_speak_async(item))
 
     paused = False
     last_space = 0  # ✅ FIX: debounce initialization
+    paused_manual = False
 
     try:
         while True:
 
-            # если проигрывание завершилось И не на паузе
-            if not pygame.mixer.music.get_busy() and not paused:
-                return "DONE"
-
+            # ----------------------------
+            # 1. EVENT HANDLING
+            # ----------------------------
             for event in pygame.event.get():
 
                 if event.type == pygame.QUIT:
@@ -94,7 +95,7 @@ def speak(item: dict):
                         pygame.mixer.music.stop()
                         return "PREVIOUS"
 
-                    # SPACE = pause / resume
+                    # SPACE = manual pause / resume
                     if event.key == pygame.K_SPACE:
 
                         now = pygame.time.get_ticks()
@@ -102,17 +103,44 @@ def speak(item: dict):
                         # debounce
                         if now - last_space < 200:
                             continue
+
                         last_space = now
 
-                        if paused:
-                            pygame.mixer.music.unpause()
-                            paused = False
-                        else:
-                            pygame.mixer.music.pause()
-                            paused = True
+                        paused_manual = not paused_manual
 
+
+            # ----------------------------
+            # 2. AUTO PAUSE LOGIC (TIME BASED)
+            # ----------------------------
+            paused_auto = time.time() < TimeEndPause
+
+            # итоговое состояние паузы
+            paused = paused_manual or paused_auto
+
+
+            # ----------------------------
+            # 3. APPLY STATE (без дерганья)
+            # ----------------------------
+            if paused:
+                if pygame.mixer.music.get_busy():
+                    pygame.mixer.music.pause()
+            else:
+                pygame.mixer.music.unpause()
+
+
+            # ----------------------------
+            # 4. TRACK END CHECK
+            # ----------------------------
+            if not pygame.mixer.music.get_busy() and not paused:
+                return "DONE"
+
+
+            # ----------------------------
+            # 5. CPU LIMIT
+            # ----------------------------
             pygame.time.wait(20)
-
+        
+            
     finally:
         try:
             pygame.mixer.music.unload()

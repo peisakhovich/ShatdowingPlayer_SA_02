@@ -6,6 +6,7 @@
 import pyodbc
 import logging
 import pygame
+import time
 
 from audio import tts
 
@@ -71,6 +72,8 @@ def run_session(plan: list[dict], set_id: int):
     print(f"SA_02 TEST SESSION | SET ID: {set_id}")
     print("==============================\n")
 
+    TimeEndPause = time.time()  # Initialize TimeEndPause to current time
+
     idx = 0
 
     while idx < len(plan):
@@ -81,13 +84,14 @@ def run_session(plan: list[dict], set_id: int):
         print(f"TEXT   : {item['text']}")
         print(f"SPEED  : {item['speed']}")
         print(f"PAUSE  : {item['pause']} ms")
+        print(f"TIME_PAUSE:{TimeEndPause} ")
         print(f"REPEAT : {item['repeat']}")
 
         for r in range(item["repeat"]):
 
             print(f"   ▶ repeat {r+1}/{item['repeat']}")
 
-            result = tts.speak(item)
+            result = tts.speak(item,TimeEndPause)
 
           
             if result == "NEXT":
@@ -101,6 +105,13 @@ def run_session(plan: list[dict], set_id: int):
             elif result == "RESTART":
                 idx = 0
                 break
+            # Set time for PAUSE after done item
+            elif result == "DONE":
+
+                TimeEndPause = time.time() + (item["pause"] / 1000)  # Set the end time for the pause   
+                idx += 1
+                break
+            
 
             elif result == "TERMINATE":
                 return
@@ -120,8 +131,7 @@ def main():
     screen = pygame.display.set_mode((500, 120))
     pygame.display.set_caption("Shadowing App")
 
-    #tate = create_event_state()
-
+    
     try:
         conn = pyodbc.connect(CONNECTION_STRING)
 
