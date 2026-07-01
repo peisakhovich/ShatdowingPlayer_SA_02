@@ -7,19 +7,24 @@ import pyodbc
 import logging
 import pygame
 import time
+import os
 
 from audio import tts
+from dotenv import load_dotenv
+
+load_dotenv("config.env")
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+DB_PASS=os.getenv("DB_PASS")
 
 CONNECTION_STRING = (
     "DRIVER={ODBC Driver 17 for SQL Server};"
     "SERVER=telegrambotsql.database.windows.net;"
     "DATABASE=telegrambotdb;"
     "UID=tb_admin;"
-    "PWD=tb_39226417;"
+    "PWD=" + DB_PASS + ";"
     "Encrypt=yes;"
     "TrustServerCertificate=yes;"
     "Connection Timeout=30;"
@@ -85,7 +90,7 @@ def run_session(plan: list[dict], set_id: int):
         print(f"TEXT   : {item['text']}")
         print(f"SPEED  : {item['speed']}")
         print(f"PAUSE  : {item['pause']} ms")
-        print(f"TIME_PAUSE:{TimeEndPause} ")
+        #print(f"TIME_PAUSE:{TimeEndPause} ")
         print(f"REPEAT : {item['repeat']}")
 
         for r in range(item["repeat"]):
@@ -142,30 +147,29 @@ def main():
     screen = pygame.display.set_mode((500, 120))
     pygame.display.set_caption("Shadowing App")
 
-    
-    try:
-        conn = pyodbc.connect(CONNECTION_STRING)
+    while True:
+        try:
+            conn = pyodbc.connect(CONNECTION_STRING)
+            print("Соединение установлено.")
+        
+            plan = load_training_plan(conn, set_id)
 
-        plan = load_training_plan(conn, set_id)
+            if not plan:
+                print("No data found for set:", set_id)
+                return
 
-        if not plan:
-            print("No data found for set:", set_id)
-            return
+            run_session(plan, set_id)
+        
+            break
 
-        run_session(plan, set_id)
+        except pyodbc.Error as e:
+            print(f"Ошибка подключения: {e}")
+            print("Повтор через 5 секунд...")
+            time.sleep(5)
 
-
-    except pyodbc.Error as e:
-        logger.exception("Database error")
-        print("DB error:", e)
-
-    except Exception as e:
-        logger.exception("Unexpected error")
-        print("Unexpected error:", e)
-
-    finally:
-        if conn:
-            conn.close()
+        finally:
+            if conn:
+                conn.close()
 
 
 if __name__ == "__main__":
