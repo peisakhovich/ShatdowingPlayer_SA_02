@@ -88,7 +88,7 @@ def run_session(plan: list[dict], set_id: int):
 
         print(f"\n[{idx+1}] PHRASE:")
         print(f"TEXT   : {item['text']}")
-        print(f"SPEED  : {item['speed']}")
+        print(f"SPEED  : {item['speed']*SpeedTune}")
         print(f"PAUSE  : {item['pause']} ms")
         #print(f"TIME_PAUSE:{TimeEndPause} ")
         print(f"REPEAT : {item['repeat']}")
@@ -149,6 +149,7 @@ def main():
 
     while True:
         try:
+            print("Подключаемся к БД AZURE.")
             conn = pyodbc.connect(CONNECTION_STRING)
             print("Соединение установлено.")
         
@@ -163,7 +164,8 @@ def main():
             break
 
         except pyodbc.Error as e:
-            print(f"Ошибка подключения: {e}")
+            #print(f"Ошибка подключения: {e}")
+            print(f"Ошибка подключения:")
             print("Повтор через 5 секунд...")
             time.sleep(5)
 

@@ -7,8 +7,8 @@ import edge_tts
 import pygame
 
 
-VOICE = "pl-PL-MarekNeural"
-
+#VOICE = "pl-PL-MarekNeural"
+VOICE = "pl-PL-ZofiaNeural"
 
 # ----------------------------
 # INIT MIXER
