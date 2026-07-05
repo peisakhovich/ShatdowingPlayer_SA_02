@@ -1,4 +1,5 @@
 import asyncio
+import json
 import os
 import edge_tts
 import pyodbc
@@ -20,135 +21,239 @@ CONNECTION_STRING = (
     "Connection Timeout=30;"
 )
 
-cn = pyodbc.connect(CONNECTION_STRING)
+# ==========================================================
+# Database
+# ==========================================================
 
-cursor = cn.cursor()
+def connect_db():
+
+    print("Connecting to SQL Server...")
+
+    conn = pyodbc.connect(CONNECTION_STRING)
+
+    print("Connected.")
+
+    return conn
 
 
-async def load():
+# ==========================================================
+# Очистка таблиц
+# ==========================================================
+
+def clear_database(cursor):
+
+    print("Clearing tables...")
+
+    cursor.execute("DELETE FROM dbo.languages")
+    cursor.execute("DELETE FROM dbo.tts_voices")
+
+    print("Done.")
+
+
+# ==========================================================
+# Импорт одного голоса
+# ==========================================================
+
+def insert_voice(cursor, voice):
+
+    voice_tag = voice.get("VoiceTag", {})
+
+    personalities = ";".join(
+        voice_tag.get("VoicePersonalities", [])
+    )
+
+    categories = ";".join(
+        voice_tag.get("ContentCategories", [])
+    )
+
+    locale = voice.get("Locale", "")
+
+    language_code = locale.split("-")[0]
+
+    cursor.execute(
+        """
+        INSERT INTO dbo.tts_voices
+        (
+            short_name,
+            locale,
+            language_code,
+            gender,
+            friendly_name,
+            status,
+            codec,
+            personalities,
+            categories,
+            raw_json
+        )
+        VALUES
+        (
+            ?,?,?,?,?,?,?,?,?,?
+        )
+        """,
+
+        voice.get("ShortName"),
+
+        locale,
+
+        language_code,
+
+        voice.get("Gender"),
+
+        voice.get("FriendlyName"),
+
+        voice.get("Status"),
+
+        voice.get("SuggestedCodec"),
+
+        personalities,
+
+        categories,
+
+        json.dumps(
+            voice,
+            ensure_ascii=False
+        )
+    )
+
+
+# ==========================================================
+# Импорт голосов
+# ==========================================================
+
+async def import_voices(cursor):
+
+    print()
+
+    print("Loading voices from Microsoft...")
 
     voices = await edge_tts.list_voices()
 
-    locales = {}
+    print(f"Found {len(voices)} voices")
 
-    for v in voices:
+    print()
 
-        locale = v["Locale"]
+    language_map = {}
 
-        if locale not in locales:
+    count = 0
 
-            parts = locale.split("-")
+    for voice in voices:
 
-            language = parts[0]
-            country = parts[1] if len(parts) > 1 else ""
+        insert_voice(cursor, voice)
 
-            locales[locale] = (
+        locale = voice["Locale"]
+
+        language = locale.split("-")[0]
+
+        if language not in language_map:
+
+            language_map[language] = {
+
+                "locale": locale,
+
+                "default_voice": voice["ShortName"]
+
+            }
+
+        count += 1
+
+        if count % 100 == 0:
+
+            print(f"{count} voices imported...")
+
+    print()
+
+    print(f"Imported {count} voices")
+
+    return language_map
+
+# ==========================================================
+# Импорт таблицы languages
+# ==========================================================
+
+def insert_languages(cursor, language_map):
+
+    print()
+    print("Importing languages...")
+
+    count = 0
+
+    for language_code in sorted(language_map.keys()):
+
+        item = language_map[language_code]
+
+        cursor.execute(
+            """
+            INSERT INTO dbo.languages
+            (
+                language_code,
                 locale,
-                language,
+                language_name,
+                native_name,
                 country,
-                locale,
-                locale
+                default_voice,
+                enabled
             )
+            VALUES
+            (
+                ?,?,?,?,?,?,1
+            )
+            """,
 
-    # ---------- languages ----------
+            language_code,
+            item["locale"],
+            language_code.upper(),     # временно
+            None,
+            None,
+            item["default_voice"]
+        )
 
-    for row in locales.values():
+        count += 1
 
-        cursor.execute("""
-
-IF NOT EXISTS
-(
-SELECT 1
-FROM dbo.languages
-WHERE locale=?
-)
-
-INSERT INTO dbo.languages
-(
-locale,
-language_code,
-country_code,
-english_name,
-native_name
-)
-
-VALUES
-(
-?,?,?,?,?
-)
-
-""", row[0], *row)
-
-    # ---------- voices ----------
-
-    for v in voices:
-
-        cursor.execute("""
-
-MERGE dbo.tts_voices AS T
-
-USING
-(
-SELECT
-? AS short_name
-) S
-
-ON T.short_name=S.short_name
-
-WHEN MATCHED THEN
-
-UPDATE SET
-
-display_name=?,
-locale=?,
-gender=?,
-voice_type='Neural',
-friendly_name=?,
-status='Active'
-
-WHEN NOT MATCHED THEN
-
-INSERT
-(
-short_name,
-display_name,
-locale,
-gender,
-voice_type,
-friendly_name,
-status
-)
-
-VALUES
-(
-?,
-?,
-?,
-?,
-'Neural',
-?,
-'Active'
-);
-
-""",
-
-v["ShortName"],
-v["FriendlyName"],
-v["Locale"],
-v["Gender"],
-v["FriendlyName"],
-
-v["ShortName"],
-v["FriendlyName"],
-v["Locale"],
-v["Gender"],
-v["FriendlyName"]
-)
-
-    cn.commit()
+    print(f"Imported {count} languages")
 
 
-asyncio.run(load())
+# ==========================================================
+# Main
+# ==========================================================
 
-cursor.close()
-cn.close()
+async def main():
+
+    conn = connect_db()
+    cursor = conn.cursor()
+
+    try:
+
+        clear_database(cursor)
+
+        language_map = await import_voices(cursor)
+
+        insert_languages(cursor, language_map)
+
+        conn.commit()
+
+        print()
+        print("=" * 50)
+        print("Import completed successfully")
+        print("=" * 50)
+        print(f"Voices    : {cursor.execute('SELECT COUNT(*) FROM dbo.tts_voices').fetchone()[0]}")
+        print(f"Languages : {cursor.execute('SELECT COUNT(*) FROM dbo.languages').fetchone()[0]}")
+
+    except Exception as ex:
+
+        conn.rollback()
+        print()
+        print("ERROR:")
+        print(ex)
+
+    finally:
+
+        cursor.close()
+        conn.close()
+
+
+# ==========================================================
+# Entry Point
+# ==========================================================
+
+if __name__ == "__main__":
+    asyncio.run(main())

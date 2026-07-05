@@ -164,7 +164,7 @@ def main():
             break
 
         except pyodbc.Error as e:
-            #print(f"Ошибка подключения: {e}")
+            print(f"Ошибка подключения: {e}")
             print(f"Ошибка подключения:")
             print("Повтор через 5 секунд...")
             time.sleep(5)

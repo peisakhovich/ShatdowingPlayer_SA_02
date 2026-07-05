@@ -2,4 +2,5 @@ pyttsx3
 python-dotenv
 pyodbc
 pygame
+pygame_gui
 edge_tts
