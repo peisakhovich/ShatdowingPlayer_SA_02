@@ -1,0 +1,214 @@
+pygame_gui — COMPACT API REFERENCE (+ examples)
+1. CORE
+▪ UIManager
+✔ Методы
+process_events(event)
+
+Обрабатывает pygame события и маршрутизирует в UI.
+
+for event in pygame.event.get():
+    ui_manager.process_events(event)
+update(time_delta)
+
+Обновляет состояние UI (анимации, фокус, логика).
+
+ui_manager.update(dt)
+draw_ui(surface)
+
+Рисует весь UI слой.
+
+screen.fill((30, 30, 30))
+ui_manager.draw_ui(screen)
+✔ Свойства
+window_resolution
+time_scale
+focus_set
+2. BASE SYSTEM
+▪ UIElement
+✔ Методы
+kill()
+
+Удаляет элемент из UI.
+
+button.kill()
+hide() / show()
+label.hide()
+label.show()
+enable() / disable()
+button.disable()
+button.enable()
+set_position()
+element.set_position((100, 100))
+✔ Свойства
+rect
+relative_rect
+visible
+enabled
+manager
+container
+▪ UIContainer
+✔ Назначение
+
+Логическая группировка элементов.
+
+✔ Пример
+panel = UIPanel(pygame.Rect(50, 50, 300, 200), manager)
+
+btn = UIButton(
+    pygame.Rect(10, 10, 100, 40),
+    "OK",
+    manager,
+    container=panel
+)
+▪ UIPanel
+✔ Назначение
+
+Визуальный контейнер с фоном.
+
+✔ Пример
+panel = UIPanel(
+    pygame.Rect(50, 50, 300, 200),
+    manager
+)
+▪ UIWindow
+✔ Назначение
+
+Плавающее окно UI.
+
+✔ Пример
+window = UIWindow(
+    pygame.Rect(100, 100, 400, 300),
+    manager,
+    window_display_title="Settings"
+)
+3. WIDGETS
+▪ UIButton
+✔ Пример
+button = UIButton(
+    pygame.Rect(100, 100, 200, 50),
+    "Play",
+    manager
+)
+✔ Обработка
+if event.type == pygame_gui.UI_BUTTON_PRESSED:
+    print("Pressed")
+▪ UILabel
+✔ Пример
+label = UILabel(
+    pygame.Rect(50, 50, 200, 30),
+    "Status: Ready",
+    manager
+)
+
+label.set_text("Loading...")
+▪ UITextEntryLine
+✔ Пример
+entry = UITextEntryLine(
+    pygame.Rect(100, 100, 200, 40),
+    manager
+)
+
+text = entry.get_text()
+✔ Обработка
+if event.type == pygame_gui.UI_TEXT_ENTRY_FINISHED:
+    print(event.text)
+▪ UITextBox
+✔ Пример
+box = UITextBox(
+    "<b>Hello</b>",
+    pygame.Rect(50, 50, 300, 200),
+    manager
+)
+▪ UIDropDownMenu
+menu = UIDropDownMenu(
+    ["A", "B", "C"],
+    "A",
+    pygame.Rect(50, 50, 150, 40),
+    manager
+)
+▪ UISelectionList
+list_widget = UISelectionList(
+    pygame.Rect(50, 50, 200, 200),
+    ["Item1", "Item2"],
+    manager
+)
+▪ UIHorizontalSlider
+slider = UIHorizontalSlider(
+    pygame.Rect(50, 50, 200, 30),
+    0, 100, 50,
+    manager
+)
+▪ UIProgressBar
+bar = UIProgressBar(
+    pygame.Rect(50, 50, 200, 30),
+    manager
+)
+
+bar.set_current_progress(50)
+▪ Separators
+UIHorizontalSeparator(pygame.Rect(0, 0, 300, 2), manager)
+4. EVENTS
+▪ Button
+if event.type == pygame_gui.UI_BUTTON_PRESSED:
+    print("Button clicked")
+▪ Text input
+if event.type == pygame_gui.UI_TEXT_ENTRY_FINISHED:
+    print(event.text)
+▪ Window
+if event.type == pygame_gui.UI_WINDOW_CLOSE:
+    print("Closed")
+5. SYSTEMS
+▪ Focus system
+click → element active → keyboard input
+▪ Z-order
+UIWindow > UIPanel > UIElement
+▪ Theme system
+Пример UIManager с темой
+ui_manager = pygame_gui.UIManager(
+    (800, 600),
+    theme_path="theme.json"
+)
+▪ Anchors
+anchors={
+    "left": "left",
+    "top": "top"
+}
+6. MINIMAL APP TEMPLATE
+import pygame
+import pygame_gui
+
+pygame.init()
+
+screen = pygame.display.set_mode((800, 600))
+clock = pygame.time.Clock()
+
+manager = pygame_gui.UIManager((800, 600))
+
+button = pygame_gui.UIButton(
+    pygame.Rect(100, 100, 200, 50),
+    "Click",
+    manager
+)
+
+running = True
+
+while running:
+    dt = clock.tick(60) / 1000.0
+
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
+
+        manager.process_events(event)
+
+        if event.type == pygame_gui.UI_BUTTON_PRESSED:
+            print("Pressed")
+
+    manager.update(dt)
+
+    screen.fill((30, 30, 30))
+    manager.draw_ui(screen)
+
+    pygame.display.update()
+
+
