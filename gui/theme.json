@@ -1,16 +1,32 @@
  {
+    "panel":
+     {
+         "colours":
+         {
+             "dark_bg":"#100000",
+             "normal_border": "#999999"
+         },
+         "misc":
+         {
+             "shape": "rounded_rectangle",
+             "shape_corner_radius": "10",
+             "border_width": "1",
+             "shadow_width": "15"
+         }
+     },
+
      "label":
      {
          "colours":
          {
-             "dark_bg": "#ffff22",
-             "normal_text": "#65CBD8",
+             "dark_bg": "#100000",
+             "normal_text": "#436668",
              "text_shadow": "#505050"
          },
          "font":
          {
              "name": "roboto",
-             "size": "24",
+             "size": "12",
              "bold": "0",
              "italic": "0"
            
@@ -27,14 +43,14 @@
      {
          "colours":
          {
-             "dark_bg": "#000000",
-             "normal_text": "#f3C004",
+             "dark_bg": "#100000",
+             "normal_text": "#29a4A4",
              "text_shadow": "#505050"
          },
          "font":
          {
              "name": "inter_bold",
-             "size": "22",
+             "size": "18",
              "bold": "1",
              "italic": "0"
          },

@@ -1,13 +1,1 @@
-manager.add_font_paths(
-    "inter_bold",
-    os.path.join(font_dir, "Inter_Regular.ttf"),
-    bold_path=os.path.join(font_dir, "Inter_Bold.ttf"),
-    italic_path=os.path.join(font_dir, "Inter_Italic.ttf"),
-    bold_italic_path=os.path.join(font_dir, "Inter_BoldItalic.ttf")
-)
-
-manager.preload_fonts([
-    {   "name": "inter_bold",
-        "point_size": 22,
-        "style": "bold"    } ])
 

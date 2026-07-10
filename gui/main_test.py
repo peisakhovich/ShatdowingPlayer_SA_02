@@ -4,14 +4,14 @@ import os
 
 from engine.image_button import ImageButton
 from engine.image_loader import ImageLoader
-
+from pygame_gui.elements import UIHorizontalSlider,UILabel,UIPanel
 
 # -------------------------
 # INIT
 # -------------------------
 pygame.init()
 
-WIDTH, HEIGHT =900, 600
+WIDTH, HEIGHT =850, 500
 
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("SA_02 GUI v2")
@@ -31,15 +31,10 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 theme_path = os.path.join(BASE_DIR, "theme.json")
 
-
-
-
-
 font = pygame.font.Font(
     "gui/assets/fonts/inter/Inter_Regular.ttf",
     64
 )
-
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -49,10 +44,6 @@ font_dir = os.path.join(
     "fonts",
     "inter"
 )
-
-#print("font_dir",font_dir)
-#print(theme_path)
-#print(os.path.exists(theme_path))
 
 manager = pygame_gui.UIManager((WIDTH, HEIGHT),theme_path)
 
@@ -99,53 +90,117 @@ BUTTON_DEFS = [
 # LAYOUT CONFIG
 # -------------------------
 
-BTN_SIZE = (32, 32)
-BTN_INTERVAL = 10
-LEN_BUTTONS = (len(BUTTON_DEFS)+1)*((BTN_SIZE[0]+BTN_INTERVAL))+BTN_INTERVAL
-BTN_START = (WIDTH/2-LEN_BUTTONS/2,HEIGHT-BTN_SIZE[1]-BTN_INTERVAL ) # (x, y) координаты верхнего левого угла кнопок
+BTN_SIZE = (32, 32) # width, height of buttons
+BTN_INTERVAL = 10 # Interval between buttons
+
+LEN_BUTTONS = (len(BUTTON_DEFS)+1)*((BTN_SIZE[1]+BTN_INTERVAL))+BTN_INTERVAL
+BTN_START = (WIDTH-LEN_BUTTONS,HEIGHT-(BTN_SIZE[1]+BTN_INTERVAL)*4 ) # (x, y) координаты верхнего левого угла начала кнопок
 BTN_PARAM = ( BTN_START[0], BTN_START[1], BTN_SIZE[0],BTN_SIZE[1], BTN_INTERVAL)
 
+
+# -----------
+# Панели 
+# -----------
+
+# 
+TextPanel = UIPanel(
+     relative_rect=pygame.Rect(  BTN_SIZE[0]/4
+                               , BTN_SIZE[1]/4
+                               , WIDTH- BTN_SIZE[0]/2
+                               , HEIGHT-BTN_SIZE[0]*6),
+     manager=manager
+ )
+
+# Информационная панель (для отображения текущего состояния)  
+InfoPanel = UIPanel(
+     relative_rect=pygame.Rect(  LEN_BUTTONS-BTN_SIZE[0]
+                               , BTN_START[1]+BTN_SIZE[0]*1
+                               , WIDTH-LEN_BUTTONS+BTN_SIZE[0]*0.75
+                               , BTN_SIZE[1]*4.25),
+     manager=manager
+ )
+
+# тонких настроек
+TunelPanel = UIPanel(
+     relative_rect=pygame.Rect(  BTN_SIZE[0]/4
+                               , HEIGHT-BTN_SIZE[0]*6
+                               , LEN_BUTTONS-BTN_SIZE[0]
+                               , BTN_SIZE[0]*6),
+     manager=manager
+ )
+
+
+# ------------------------- 
+# slider(под переменную скорости говорения )
+# ------------------------- 
+
+SpeedTune = 1.0   # стартовая скорость (например 1x)
+LEN_SLIDER = (len(BUTTON_DEFS)-2)*((BTN_SIZE[0]+BTN_INTERVAL))+BTN_INTERVAL
+
+speed_slider = UIHorizontalSlider(
+    relative_rect=pygame.Rect(15+BTN_SIZE[0]*2, 10, LEN_SLIDER-BTN_SIZE[1], BTN_SIZE[0]),
+    start_value=SpeedTune,
+    value_range=(0.2, 2.0),   # диапазон скорости
+    manager=manager,
+    container=TunelPanel
+)
+
+speed_label = UILabel(
+    relative_rect=pygame.Rect(10,12,BTN_SIZE[0]*2,BTN_SIZE[1]-3),
+    text=f"{SpeedTune:.2f}",
+    manager=manager,
+    container=TunelPanel,
+    object_id="#speed_label"
+)
+
+speed_label_hint = UILabel(
+    relative_rect=pygame.Rect(BTN_SIZE[0],BTN_SIZE[1]+10,LEN_SLIDER,BTN_SIZE[1]/2),
+    text=f"Tune Speed of Voice:",
+    manager=manager,
+    container=TunelPanel
+)
+
+# ------------------------- 
+# slider(под переменную длинны пауз между фразами )
+# ------------------------- 
+
+PauseLengthTune = 1.0   # стартовая длина паузы (например 1x)
+
+LEN_SLIDER = (len(BUTTON_DEFS)-2)*((BTN_SIZE[0]+BTN_INTERVAL))+BTN_INTERVAL
+
+pause_slider = UIHorizontalSlider(
+    relative_rect=pygame.Rect(15+BTN_SIZE[0]*2, BTN_SIZE[1]*3, LEN_SLIDER-BTN_SIZE[1], BTN_SIZE[0]),
+    start_value=PauseLengthTune,
+    value_range=(0.2, 2.0),   # диапазон скорости
+    manager=manager,
+    container=TunelPanel
+)
+
+pause_label = UILabel(
+    relative_rect=pygame.Rect(10,BTN_SIZE[1]*3,BTN_SIZE[0]*2,BTN_SIZE[1]-3),
+    text=f"{PauseLengthTune:.2f}",
+    manager=manager,
+    container=TunelPanel,
+    object_id="#speed_label"
+)
+
+pause_label_hint = UILabel(
+    relative_rect=pygame.Rect(BTN_SIZE[0],BTN_SIZE[1]*4+5,LEN_SLIDER,BTN_SIZE[1]/2),
+    text=f"Tune Length of Pause between phrases:",
+    manager=manager,
+    container=TunelPanel
+)
+
+
+# -------------------------
+# Создание кнопок 
+# -------------------------
 buttons = [
     (name, CreateImageButton(index, BTN_PARAM, name))
     for name, index in BUTTON_DEFS
 ]
 
-# -------------------------
-# slider(под переменную скорости говорения )
-# ------------------------- 
 
-SpeedTune = 1.0   # стартовая скорость (например 1x)
-LEN_SLIDER = (len(BUTTON_DEFS))*((BTN_SIZE[0]+BTN_INTERVAL))+BTN_INTERVAL
-# --- slider ---
-speed_slider = pygame_gui.elements.UIHorizontalSlider(
-    relative_rect=pygame.Rect((BTN_PARAM[0]+BTN_SIZE[1], BTN_PARAM[1]-BTN_SIZE[1]-BTN_INTERVAL), (LEN_SLIDER, BTN_SIZE[1])),
-    start_value=SpeedTune,
-    value_range=(0.2, 2.0),   # диапазон скорости
-    manager=manager
-)
-
-speed_label = pygame_gui.elements.UILabel(
-    relative_rect=pygame.Rect(280, 20, 70, 70),
-    text=f"{SpeedTune:.2f}",
-    manager=manager,
-    object_id="#speed_label"
-)
-
-# -------------------------
-# PLACEHOLDER PANELS (под будущую архитектуру)
-# -------------------------
-class PhrasePanel:
-    def draw(self, screen):
-        # потом сюда большой текст
-        pass
-
-class LogPanel:
-    def draw(self, screen):
-        # потом сюда лог событий
-        pass
-
-phrase_panel = PhrasePanel()
-log_panel = LogPanel()
 
 # -------------------------
 # MAIN LOOP
@@ -175,8 +230,13 @@ while running:
             if event.ui_element == speed_slider:
                 SpeedTune = event.value
                 speed_label.set_text(f"{SpeedTune:.2f}")
-                #print("SpeedTune =", SpeedTune)
+                
+            if event.ui_element == pause_slider:
+                PauseLengthTune = event.value
+                pause_label.set_text(f"{PauseLengthTune:.2f}")
+                
 
+        # 📌 Ловим клики по кнопкам
         for _, btn in buttons:
             btn.handle_event(event)
 
@@ -197,20 +257,14 @@ while running:
     # DRAW
     # -------------------------
     screen.fill((30, 30, 30))
+    #background.fill(pygame.Color('#000000'))
+    #screen.blit(background, (0,0))
     
-    
-    text = font.render("Проверка Inter", True, (255,255,255))
-    screen.blit(text, (50,50))
-
-    # UI: panels (пока пустые)
-    phrase_panel.draw(screen)
-    log_panel.draw(screen)
+ 
 
     # buttons
     for _, btn in buttons:
         btn.draw(screen)
-
-
 
 
     manager.update(dt)
