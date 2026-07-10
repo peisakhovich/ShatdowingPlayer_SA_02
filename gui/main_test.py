@@ -5,6 +5,7 @@ import os
 from engine.image_button import ImageButton
 from engine.image_loader import ImageLoader
 from pygame_gui.elements import UIHorizontalSlider,UILabel,UIPanel
+from pygame_gui.elements import UITextBox
 
 # -------------------------
 # INIT
@@ -21,6 +22,13 @@ window_surface = screen
 background = pygame.Surface((WIDTH, HEIGHT))
 background.fill(pygame.Color('#000000'))
 
+InfoData = {"voice_short_name": "pl-PL-MarekNeural",
+            "language_code": "pl",
+            "phrase_level": "B2",    
+            "set_id": 1}
+
+TextItem="Wydaje mi sie, ze problem jest bardziej zlozony."
+TextItemTranslate="Мне кажется, проблема гораздо сложнее."
 
 
 clock = pygame.time.Clock()
@@ -111,14 +119,6 @@ TextPanel = UIPanel(
      manager=manager
  )
 
-# Информационная панель (для отображения текущего состояния)  
-InfoPanel = UIPanel(
-     relative_rect=pygame.Rect(  LEN_BUTTONS-BTN_SIZE[0]
-                               , BTN_START[1]+BTN_SIZE[0]*1
-                               , WIDTH-LEN_BUTTONS+BTN_SIZE[0]*0.75
-                               , BTN_SIZE[1]*4.25),
-     manager=manager
- )
 
 # тонких настроек
 TunelPanel = UIPanel(
@@ -126,6 +126,15 @@ TunelPanel = UIPanel(
                                , HEIGHT-BTN_SIZE[0]*6
                                , LEN_BUTTONS-BTN_SIZE[0]
                                , BTN_SIZE[0]*6),
+     manager=manager
+ )
+
+# Информационная панель (для отображения текущего состояния)  
+InfoPanel = UIPanel(
+     relative_rect=pygame.Rect(  LEN_BUTTONS-BTN_SIZE[0]
+                               , BTN_START[1]+BTN_SIZE[0]*1
+                               , WIDTH-LEN_BUTTONS+BTN_SIZE[0]*0.75
+                               , BTN_SIZE[1]*4.25),
      manager=manager
  )
 
@@ -190,6 +199,50 @@ pause_label_hint = UILabel(
     manager=manager,
     container=TunelPanel
 )
+
+# -------------------------
+# Заполняем Информационную панель
+# -------------------------
+Infotext = (
+    f"Voice: {InfoData['voice_short_name']}"
+    f"     Language: {InfoData['language_code']}"
+    )
+Infotext1 = (    
+    f"Phrase Level: {InfoData['phrase_level']}"
+    f"     Set ID: {InfoData['set_id']}"
+)
+
+
+info_label = UILabel(
+    relative_rect=pygame.Rect(10,10, WIDTH-LEN_BUTTONS,20), 
+    text=Infotext,
+    manager=manager,
+    object_id="#info_label",
+    container=InfoPanel 
+)
+info_label1 = UILabel(
+    relative_rect=pygame.Rect(10,30, WIDTH-LEN_BUTTONS,20), 
+    text=Infotext1,
+    manager=manager,
+    object_id="#info_label",
+    container=InfoPanel 
+)
+
+text_box = UITextBox(
+    html_text=TextItem,
+    relative_rect=pygame.Rect(10,10,WIDTH-BTN_SIZE[0]*2,150),
+    manager=manager,
+    object_id="#text_box",
+    container=TextPanel 
+)
+text_box_translate = UITextBox(
+    html_text=TextItemTranslate,
+    relative_rect=pygame.Rect(10,160,WIDTH-BTN_SIZE[0]*2,100),
+    manager=manager,
+    object_id="#box_translate",
+    container=TextPanel 
+)
+
 
 
 # -------------------------
